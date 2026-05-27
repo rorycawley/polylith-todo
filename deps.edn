@@ -7,13 +7,17 @@
                      metosin/muuntaja                  {:mvn/version "0.6.11"}
                      ring/ring-jetty-adapter           {:mvn/version "1.15.3"}
                      com.github.seancorfield/next.jdbc {:mvn/version "1.3.1093"}
-                     org.postgresql/postgresql         {:mvn/version "42.7.4"}}}
+                     org.postgresql/postgresql         {:mvn/version "42.7.4"}
+                     aero/aero                         {:mvn/version "1.1.6"}}}
   :+default  {:extra-paths ["components/store-memory/src"
                              "components/store-memory/test"]}
   :+postgres {:extra-paths ["components/store-postgres/src"
                              "components/store-postgres/test"]}
   :test {:extra-paths ["components/todo/src"
-                       "components/todo/test"]
+                       "components/todo/test"
+                       "bases/todo-api/src"
+                       "bases/todo-api/test"
+                       "bases/todo-api/resources"]
          :extra-deps {org.testcontainers/testcontainers {:mvn/version "2.0.5"}
                       org.testcontainers/postgresql     {:mvn/version "1.21.4"}}}
   :poly {:main-opts ["-m" "polylith.clj.core.poly-cli.core"]

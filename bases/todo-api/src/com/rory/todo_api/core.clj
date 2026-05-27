@@ -1,5 +1,7 @@
 (ns com.rory.todo-api.core
-  (:require [ring.adapter.jetty :as jetty]
+  (:require [aero.core :as aero]
+            [clojure.java.io :as io]
+            [ring.adapter.jetty :as jetty]
             [reitit.ring :as ring]
             [muuntaja.core :as m]
             [reitit.ring.middleware.muuntaja :as muuntaja]
@@ -7,11 +9,13 @@
             [com.rory.store.interface :as store])
   (:gen-class))
 
-(defn make-store []
-  (let [db-url (System/getenv "DATABASE_URL")]
-    (if db-url
-      (store/create-store {:jdbcUrl db-url})
-      (throw (ex-info "DATABASE_URL environment variable is required" {})))))
+(defn read-config []
+  (aero/read-config (io/resource "config.edn")))
+
+(defn make-store [{:keys [database-url]}]
+  (if database-url
+    (store/create-store {:jdbcUrl database-url})
+    (store/create-store)))
 
 (defn routes [s]
   ["/api"
@@ -29,18 +33,23 @@
                     :body   {:error (.getMessage e)}}))))}]
    ["/todos/:id"
     {:put    (fn [req]
-               (let [id (parse-uuid (get-in req [:path-params :id]))]
-                 (todo/complete-todo s id)
-                 {:status 200
-                  :body   {:ok true}}))
+               (try
+                 (let [id (parse-uuid (get-in req [:path-params :id]))]
+                   (todo/complete-todo s id)
+                   {:status 200 :body {:ok true}})
+                 (catch IllegalArgumentException _
+                   {:status 400 :body {:error "Invalid id"}})
+                 (catch Exception e
+                   {:status 404 :body {:error (.getMessage e)}})))
      :delete (fn [req]
-               (let [id (parse-uuid (get-in req [:path-params :id]))]
-                 (try
+               (try
+                 (let [id (parse-uuid (get-in req [:path-params :id]))]
                    (todo/delete-todo s id)
-                   {:status 200 :body {:ok true}}
-                   (catch Exception e
-                     {:status 404
-                      :body {:error (.getMessage e)}}))))}]])
+                   {:status 204})
+                 (catch IllegalArgumentException _
+                   {:status 400 :body {:error "Invalid id"}})
+                 (catch Exception e
+                   {:status 404 :body {:error (.getMessage e)}})))}]])
 
 (defn app [s]
   (ring/ring-handler
@@ -50,7 +59,8 @@
             :middleware [muuntaja/format-middleware]}})))
 
 (defn -main [& _]
-  (let [s    (make-store)
-        port (Integer/parseInt (or (System/getenv "PORT") "8080"))]
+  (let [config (read-config)
+        s      (make-store config)
+        port   (Integer/parseInt (:port config))]
     (println (str "Starting server on port " port))
     (jetty/run-jetty (app s) {:port port :join? true})))

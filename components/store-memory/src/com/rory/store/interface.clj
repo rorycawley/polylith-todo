@@ -1,13 +1,10 @@
-(ns com.rory.store.interface
-  (:require [clojure.string :as str]))
+(ns com.rory.store.interface)
 
 (defn create-store
   ([] (atom []))
   ([db-spec] (atom [])))
 
 (defn add-todo [store title]
-  (when (str/blank? title)
-    (throw (Exception. "Title cannot be blank")))
   (let [todo {:id     (random-uuid)
               :title  title
               :status :pending}]
@@ -15,16 +12,19 @@
     todo))
 
 (defn list-todos [store]
-  @store)
+  (vec @store))
 
 (defn complete-todo [store id]
+  (when (not-any? #(= id (:id %)) @store)
+    (throw (ex-info (str "Todo not found: " id) {:id id})))
   (swap! store (fn [todos]
-                 (map #(if (= id (:id %))
-                         (assoc % :status :done)
-                         %)
-                      todos))))
+                 (mapv #(if (= id (:id %))
+                          (assoc % :status :done)
+                          %)
+                       todos))))
+
 (defn delete-todo [store id]
   (when (not-any? #(= id (:id %)) @store)
-    (throw (Exception. (str "Todo not found: " id))))
+    (throw (ex-info (str "Todo not found: " id) {:id id})))
   (swap! store (fn [todos]
-                 (remove #(= id (:id %)) todos))))
+                 (filterv #(not= id (:id %)) todos))))

@@ -3,7 +3,7 @@
             [next.jdbc.result-set :as rs]))
 
 (defn create-store
-  ([] (create-store {}))
+  ([] (throw (ex-info "PostgreSQL store requires connection config — call (create-store db-spec)" {})))
   ([db-spec]
    (let [ds (jdbc/get-datasource db-spec)]
      (jdbc/execute! ds ["CREATE TABLE IF NOT EXISTS todos (
@@ -28,9 +28,15 @@
                        {:builder-fn rs/as-unqualified-maps})))
 
 (defn complete-todo [store id]
-  (jdbc/execute! store
-                 ["UPDATE todos SET status = 'done' WHERE id = ?" id]))
+  (let [result (jdbc/execute-one! store
+                                  ["UPDATE todos SET status = 'done' WHERE id = ? RETURNING id" id]
+                                  {:builder-fn rs/as-unqualified-maps})]
+    (when-not result
+      (throw (ex-info (str "Todo not found: " id) {:id id})))))
 
 (defn delete-todo [store id]
-  (jdbc/execute! store
-                 ["DELETE FROM todos WHERE id = ?" id]))
+  (let [result (jdbc/execute-one! store
+                                  ["DELETE FROM todos WHERE id = ? RETURNING id" id]
+                                  {:builder-fn rs/as-unqualified-maps})]
+    (when-not result
+      (throw (ex-info (str "Todo not found: " id) {:id id})))))
