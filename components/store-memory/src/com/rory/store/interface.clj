@@ -19,3 +19,7 @@
                          (assoc % :status :done)
                          %)
                       todos))))
+
+(defn delete-todo [store id]
+  (swap! store (fn [todos]
+                 (remove #(= id (:id %)) todos))))

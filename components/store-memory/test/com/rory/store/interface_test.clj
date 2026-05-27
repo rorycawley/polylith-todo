@@ -24,3 +24,10 @@
           todo (store/add-todo s "Buy milk")]
       (store/complete-todo s (:id todo))
       (is (= :done (:status (first (store/list-todos s))))))))
+
+(deftest delete-todo-removes-it-from-store
+  (testing "Given an existing todo in the store, when I delete it, it no longer appears"
+    (let [s    (store/create-store)
+          todo (store/add-todo s "Buy milk")]
+      (store/delete-todo s (:id todo))
+      (is (= 0 (count (store/list-todos s)))))))
