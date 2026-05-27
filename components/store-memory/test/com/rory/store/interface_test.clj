@@ -9,3 +9,11 @@
       (is (= "Buy milk" (:title result)))
       (is (= :pending (:status result)))
       (is (some? (:id result))))))
+
+
+(deftest list-todos-returns-all-todos
+  (testing "Given some todos in the store, when I list them, I see all of them"
+    (let [s (store/create-store)]
+      (store/add-todo s "Buy milk")
+      (store/add-todo s "Walk dog")
+      (is (= 2 (count (store/list-todos s)))))))

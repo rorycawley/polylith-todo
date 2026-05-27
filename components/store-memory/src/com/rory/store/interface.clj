@@ -9,3 +9,6 @@
               :status :pending}]
     (swap! store conj todo)
     todo))
+
+(defn list-todos [store]
+  @store)
