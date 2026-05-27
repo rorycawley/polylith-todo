@@ -7,3 +7,7 @@
     (let [result (todo/add-todo "Buy milk")]
       (is (= "Buy milk" (:title result)))
       (is (= :pending (:status result))))))
+
+(deftest add-todo-with-blank-title
+  (testing "Given a blank title, when I add it, it is rejected with an error"
+    (is (thrown? Exception (todo/add-todo "")))))
