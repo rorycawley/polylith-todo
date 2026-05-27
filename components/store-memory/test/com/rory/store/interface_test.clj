@@ -1,0 +1,11 @@
+(ns com.rory.store.interface-test
+  (:require [clojure.test :refer :all]
+            [com.rory.store.interface :as store]))
+
+(deftest add-todo-persists-to-store
+  (testing "Given a valid title, when I add it, it appears in the store as pending"
+    (let [s      (store/create-store)
+          result (store/add-todo s "Buy milk")]
+      (is (= "Buy milk" (:title result)))
+      (is (= :pending (:status result)))
+      (is (some? (:id result))))))
