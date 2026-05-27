@@ -29,3 +29,12 @@
 (deftest list-todos-when-empty
   (testing "Given no todos, when I list them, I get an empty list"
     (is (= [] (todo/list-todos [])))))
+
+(deftest list-todos-returns-all-regardless-of-status
+  (testing "Given some todos, when I list them, I see all of them regardless of status"
+    (let [todo1  (todo/add-todo "Buy milk")
+          todo2  (-> (todo/add-todo "Walk dog") todo/complete-todo)
+          result (todo/list-todos [todo1 todo2])]
+      (is (= 2 (count result)))
+      (is (some #(= "Buy milk" (:title %)) result))
+      (is (some #(= "Walk dog" (:title %)) result)))))
