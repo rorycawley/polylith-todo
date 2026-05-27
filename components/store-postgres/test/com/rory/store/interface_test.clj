@@ -26,3 +26,24 @@
       (is (= "Buy milk" (:title result)))
       (is (= :pending (:status result)))
       (is (some? (:id result))))))
+
+(deftest list-todos-returns-all-todos
+  (testing "Given some todos in the store, when I list them, I see all of them"
+    (store/add-todo *db* "Walk dog")
+    (store/add-todo *db* "Buy bread")
+    (is (>= (count (store/list-todos *db*)) 2))))
+
+(deftest complete-todo-sets-status-to-done
+  (testing "Given a pending todo, when I complete it, its status becomes done"
+    (let [todo (store/add-todo *db* "Read book")]
+      (store/complete-todo *db* (:id todo))
+      (let [result (first (filter #(= (:id todo) (:id %))
+                                  (store/list-todos *db*)))]
+        (is (= :done (:status result)))))))
+
+(deftest delete-todo-removes-it-from-store
+  (testing "Given an existing todo, when I delete it, it no longer appears"
+    (let [todo   (store/add-todo *db* "Clean house")
+          before (count (store/list-todos *db*))]
+      (store/delete-todo *db* (:id todo))
+      (is (= (dec before) (count (store/list-todos *db*)))))))
