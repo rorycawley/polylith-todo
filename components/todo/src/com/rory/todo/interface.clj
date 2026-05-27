@@ -6,3 +6,6 @@
     (throw (Exception. "Title cannot be blank")))
   {:title title
    :status :pending})
+
+(defn complete-todo [todo]
+  (assoc todo :status :done))

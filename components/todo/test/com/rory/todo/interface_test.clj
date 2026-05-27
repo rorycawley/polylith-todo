@@ -11,3 +11,9 @@
 (deftest add-todo-with-blank-title
   (testing "Given a blank title, when I add it, it is rejected with an error"
     (is (thrown? Exception (todo/add-todo "")))))
+
+(deftest complete-a-pending-todo
+  (testing "Given a pending todo, when I complete it, its status becomes done"
+    (let [todo   (todo/add-todo "Buy milk")
+          result (todo/complete-todo todo)]
+      (is (= :done (:status result))))))
