@@ -17,3 +17,11 @@
     (let [todo   (todo/add-todo "Buy milk")
           result (todo/complete-todo todo)]
       (is (= :done (:status result))))))
+
+(deftest completing-a-done-todo-is-idempotent
+  (testing "Given a done todo, when I complete it again, nothing changes"
+    (let [todo   (todo/add-todo "Buy milk")
+          result (-> todo
+                     todo/complete-todo
+                     todo/complete-todo)]
+      (is (= :done (:status result))))))
