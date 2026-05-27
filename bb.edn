@@ -1,0 +1,76 @@
+{:paths ["."]
+ :tasks
+ {:requires ([babashka.process :refer [shell]]
+             [clojure.string :as str])
+
+  :init (do
+          (defn sh [& args]
+            (binding [*out* *err*]
+              (apply println "+" (remove map? args)))
+            (apply shell args)))
+
+  help
+  {:doc              "Show available tasks"
+   :override-builtin true
+   :task             (do (println "")
+                         (println "Prerequisites:")
+                         (println "  1. Install mise: curl https://mise.run | sh")
+                         (println "  2. Run: bb install")
+                         (println "")
+                         (println "Then:")
+                         (println "  bb tasks         list all available tasks")
+                         (println "  bb test          run tests (in-memory store)")
+                         (println "  bb test:postgres run tests (postgres via testcontainers)")
+                         (println "")
+                         (println "After bb up, the stack is available at:")
+                         (println "  http://localhost:8080/api/todos  todo API")
+                         (println "")
+                         (println "Rancher Desktop users — one-time setup for bb test:postgres:")
+                         (println "  ~/.docker-java.properties")
+                         (println "    api.version=1.44")
+                         (println "")
+                         (println "  ~/.testcontainers.properties")
+                         (println "    docker.host=unix:///Users/$USER/.rd/docker.sock")
+                         (println "    ryuk.disabled=true")
+                         (println "    checks.disable=true")
+                         (println ""))}
+
+  install
+  {:doc  "Install tools via mise"
+   :task (sh "mise" "install")}
+
+  test
+  {:doc  "Run tests using in-memory store"
+   :task (sh "poly" "test" ":dev")}
+
+  test:postgres
+  {:doc  "Run tests using postgres via testcontainers"
+   :task (let [docker-host (System/getenv "DOCKER_HOST")
+               host-ip     (or (System/getenv "TESTCONTAINERS_HOST_OVERRIDE")
+                               (try (str/trim
+                                      (:out (clojure.java.shell/sh "rdctl" "info" "--field" "ip-address")))
+                                    (catch Exception _ nil)))]
+           (sh {:extra-env (cond-> {"TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE" "/var/run/docker.sock"}
+                             docker-host (assoc "DOCKER_HOST" docker-host)
+                             host-ip     (assoc "TESTCONTAINERS_HOST_OVERRIDE" host-ip))}
+               "poly" "test" ":dev" "+postgres"))}
+
+  up
+  {:doc  "Build and start the full stack"
+   :task (do (sh "docker" "compose" "up" "-d" "--build" "--wait")
+             (println "")
+             (println "Stack is up:")
+             (println "  http://localhost:8080/api/todos")
+             (println ""))}
+
+  down
+  {:doc  "Stop and remove containers"
+   :task (sh "docker" "compose" "down" "-v")}
+
+clean
+  {:doc  "Remove build artefacts"
+   :task (sh "rm" "-rf" "projects/todo-service/target")}
+
+  all
+  {:doc     "Clean, install tools and run the full test suite against both stores"
+   :depends [clean down install test test:postgres]}}}
