@@ -1,7 +1,11 @@
 {:aliases
  {:dev {:extra-paths ["development/src"
-                      "components/todo/src"]
-        :extra-deps {org.clojure/clojure              {:mvn/version "1.12.2"}
+                      "components/todo/src"
+                      "bases/todo-api/src"]
+        :extra-deps {org.clojure/clojure               {:mvn/version "1.12.2"}
+                     metosin/reitit                    {:mvn/version "0.10.1"}
+                     metosin/muuntaja                  {:mvn/version "0.6.11"}
+                     ring/ring-jetty-adapter           {:mvn/version "1.15.3"}
                      com.github.seancorfield/next.jdbc {:mvn/version "1.3.1093"}
                      org.postgresql/postgresql         {:mvn/version "42.7.4"}}}
   :+default  {:extra-paths ["components/store-memory/src"

@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: todo
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: todo
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todo -d todo"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+
+  todo-service:
+    build:
+      context: .
+      dockerfile: projects/todo-service/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: "jdbc:postgresql://postgres:5432/todo?user=todo&password=todo"
+      PORT: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
