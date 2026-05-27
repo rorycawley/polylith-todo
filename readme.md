@@ -31,17 +31,45 @@ polylith-todo/
 └── development/           REPL / dev classpath root (no production code here)
 ```
 
-### Dependency graph
+### Overview
 
 ```
-todo-api (base)
-    └── todo (component)
-            └── store/interface   ← resolved at runtime to one of:
-                    ├── store-memory   (dev / unit-test profile)
-                    └── store-postgres (production / integration-test profile)
+  HTTP client
+      │  ▲
+      │  │
+      ▼  │
+  ┌─── base ─────────────────────────────────────────────────────────────────┐
+  │  todo-api                                                                │
+  │                                                                          │
+  │  Jetty ──► Reitit router ──► Muuntaja ──► route handler                │
+  │                                                                          │
+  │  GET /api/todos  ·  POST /api/todos                                     │
+  │  PUT /api/todos/:id  ·  DELETE /api/todos/:id                          │
+  └───────────────────────────────────┬─────────────────────────────────────┘
+                                      │
+  ┌─── component ─────────────────────▼─────────────────────────────────────┐
+  │  todo                                                                    │
+  │                                                                          │
+  │  add-todo  (validates blank title)                                       │
+  │  complete-todo  (idempotent)  ·  list-todos  ·  delete-todo             │
+  └───────────────────────────────────┬─────────────────────────────────────┘
+                                      │
+                        com.rory.store/interface
+                                      │
+                        ┌─────────────┴─────────────┐
+                        │                           │
+                        ▼                           ▼
+  ┌─── component ────────────────────┐  ┌─── component ────────────────────┐
+  │  store-memory                    │  │  store-postgres                  │
+  │                                  │  │                                  │
+  │  (atom [])                       │  │  next.jdbc ──► PostgreSQL 16    │
+  │                                  │  │                                  │
+  │  profile: :+default              │  │  profile: :+postgres             │
+  │  dev · unit tests                │  │  int. tests · production         │
+  └──────────────────────────────────┘  └──────────────────────────────────┘
 ```
 
-`todo-api` only knows about `todo`'s interface. `todo` only knows about `store`'s interface. Neither knows which store implementation is wired in — that decision is made by the project or Polylith profile at the point of composition.
+`todo-api` only knows about `todo`'s interface. `todo` only knows about `store`'s interface. Neither knows which store implementation is wired in — that decision is made by the Polylith profile at the point of composition.
 
 ### The store interface
 
@@ -55,21 +83,7 @@ Both `store-memory` and `store-postgres` live in the same Clojure namespace (`co
 (delete-todo  store id)
 ```
 
-Swapping implementations is a classpath concern, not a code change. The `+default` profile loads `store-memory`; the `+postgres` profile loads `store-postgres`. The production project hardwires `store-postgres`.
-
-### Request flow
-
-```
-HTTP request
-    → Ring / Jetty
-        → Reitit router          (todo-api base)
-            → Muuntaja middleware (JSON ↔ Clojure maps)
-                → Route handler
-                    → todo/interface  (validates, enforces business rules)
-                        → store/interface  (reads / writes)
-                            → atom  (memory)  or  PostgreSQL  (postgres)
-    ← JSON response
-```
+Swapping implementations is a classpath concern, not a code change. The `:+default` profile loads `store-memory`; the `:+postgres` profile loads `store-postgres`. The production project hardwires `store-postgres`.
 
 ## Technology stack
 
