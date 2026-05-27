@@ -17,3 +17,10 @@
       (store/add-todo s "Buy milk")
       (store/add-todo s "Walk dog")
       (is (= 2 (count (store/list-todos s)))))))
+
+(deftest complete-todo-sets-status-to-done
+  (testing "Given a pending todo in the store, when I complete it, its status becomes done"
+    (let [s    (store/create-store)
+          todo (store/add-todo s "Buy milk")]
+      (store/complete-todo s (:id todo))
+      (is (= :done (:status (first (store/list-todos s))))))))

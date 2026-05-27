@@ -12,3 +12,10 @@
 
 (defn list-todos [store]
   @store)
+
+(defn complete-todo [store id]
+  (swap! store (fn [todos]
+                 (map #(if (= id (:id %))
+                         (assoc % :status :done)
+                         %)
+                      todos))))
