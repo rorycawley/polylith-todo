@@ -38,3 +38,11 @@
       (is (= 2 (count result)))
       (is (some #(= "Buy milk" (:title %)) result))
       (is (some #(= "Walk dog" (:title %)) result)))))
+
+(deftest delete-an-existing-todo
+  (testing "Given an existing todo, when I delete it, it no longer appears in the list"
+    (let [todo1  (assoc (todo/add-todo "Buy milk") :id 1)
+          todo2  (assoc (todo/add-todo "Walk dog") :id 2)
+          result (todo/delete-todo 1 [todo1 todo2])]
+      (is (= 1 (count result)))
+      (is (not (some #(= "Buy milk" (:title %)) result))))))

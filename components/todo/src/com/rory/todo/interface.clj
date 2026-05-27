@@ -12,3 +12,6 @@
 
 (defn list-todos [todos]
   todos)
+
+(defn delete-todo [id todos]
+  (remove #(= id (:id %)) todos))
