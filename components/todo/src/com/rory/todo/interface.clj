@@ -1,20 +1,17 @@
 (ns com.rory.todo.interface
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [com.rory.store.interface :as store]))
 
-(defn add-todo [title]
-  (when (clojure.string/blank? title)
+(defn add-todo [s title]
+  (when (str/blank? title)
     (throw (Exception. "Title cannot be blank")))
-  {:title title
-   :status :pending})
+  (store/add-todo s title))
 
-(defn complete-todo [todo]
-  (assoc todo :status :done))
+(defn complete-todo [s id]
+  (store/complete-todo s id))
 
-(defn list-todos [todos]
-  todos)
+(defn list-todos [s]
+  (store/list-todos s))
 
-
-(defn delete-todo [id todos]
-  (when (not-any? #(= id (:id %)) todos)
-    (throw (Exception. (str "Todo not found: " id))))
-  (remove #(= id (:id %)) todos))
+(defn delete-todo [s id]
+  (store/delete-todo s id))

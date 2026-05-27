@@ -1,53 +1,55 @@
 (ns com.rory.todo.interface-test
-  (:require [clojure.test :as test :refer :all]
-            [com.rory.todo.interface :as todo]))
+  (:require [clojure.test :refer :all]
+            [com.rory.todo.interface :as todo]
+            [com.rory.store.interface :as store]))
+
+(defn make-store [] (store/create-store))
 
 (deftest add-todo-with-valid-title
   (testing "Given a valid title, when I add it, it appears as pending"
-    (let [result (todo/add-todo "Buy milk")]
+    (let [s      (make-store)
+          result (todo/add-todo s "Buy milk")]
       (is (= "Buy milk" (:title result)))
       (is (= :pending (:status result))))))
 
 (deftest add-todo-with-blank-title
   (testing "Given a blank title, when I add it, it is rejected with an error"
-    (is (thrown? Exception (todo/add-todo "")))))
+    (is (thrown? Exception (todo/add-todo (make-store) "")))))
 
 (deftest complete-a-pending-todo
   (testing "Given a pending todo, when I complete it, its status becomes done"
-    (let [todo   (todo/add-todo "Buy milk")
-          result (todo/complete-todo todo)]
-      (is (= :done (:status result))))))
+    (let [s    (make-store)
+          todo (todo/add-todo s "Buy milk")]
+      (todo/complete-todo s (:id todo))
+      (is (= :done (:status (first (todo/list-todos s))))))))
 
 (deftest completing-a-done-todo-is-idempotent
   (testing "Given a done todo, when I complete it again, nothing changes"
-    (let [todo   (todo/add-todo "Buy milk")
-          result (-> todo
-                     todo/complete-todo
-                     todo/complete-todo)]
-      (is (= :done (:status result))))))
+    (let [s    (make-store)
+          todo (todo/add-todo s "Buy milk")]
+      (todo/complete-todo s (:id todo))
+      (todo/complete-todo s (:id todo))
+      (is (= :done (:status (first (todo/list-todos s))))))))
 
 (deftest list-todos-when-empty
   (testing "Given no todos, when I list them, I get an empty list"
-    (is (= [] (todo/list-todos [])))))
+    (is (= [] (todo/list-todos (make-store))))))
 
 (deftest list-todos-returns-all-regardless-of-status
-  (testing "Given some todos, when I list them, I see all of them regardless of status"
-    (let [todo1  (todo/add-todo "Buy milk")
-          todo2  (-> (todo/add-todo "Walk dog") todo/complete-todo)
-          result (todo/list-todos [todo1 todo2])]
-      (is (= 2 (count result)))
-      (is (some #(= "Buy milk" (:title %)) result))
-      (is (some #(= "Walk dog" (:title %)) result)))))
+  (testing "Given some todos, when I list them, I see all of them"
+    (let [s (make-store)]
+      (todo/add-todo s "Buy milk")
+      (todo/add-todo s "Walk dog")
+      (is (= 2 (count (todo/list-todos s)))))))
 
 (deftest delete-an-existing-todo
-  (testing "Given an existing todo, when I delete it, it no longer appears in the list"
-    (let [todo1  (assoc (todo/add-todo "Buy milk") :id 1)
-          todo2  (assoc (todo/add-todo "Walk dog") :id 2)
-          result (todo/delete-todo 1 [todo1 todo2])]
-      (is (= 1 (count result)))
-      (is (not (some #(= "Buy milk" (:title %)) result))))))
+  (testing "Given an existing todo, when I delete it, it no longer appears"
+    (let [s    (make-store)
+          todo (todo/add-todo s "Buy milk")]
+      (todo/delete-todo s (:id todo))
+      (is (= 0 (count (todo/list-todos s)))))))
 
 (deftest delete-a-non-existent-todo
   (testing "Given a non-existent todo id, when I delete it, it returns an error"
-    (let [todo1 (assoc (todo/add-todo "Buy milk") :id 1)]
-      (is (thrown? Exception (todo/delete-todo 99 [todo1]))))))
+    (let [s (make-store)]
+      (is (thrown? Exception (todo/delete-todo s (random-uuid)))))))

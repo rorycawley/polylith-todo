@@ -23,7 +23,8 @@
                          (assoc % :status :done)
                          %)
                       todos))))
-
 (defn delete-todo [store id]
+  (when (not-any? #(= id (:id %)) @store)
+    (throw (Exception. (str "Todo not found: " id))))
   (swap! store (fn [todos]
                  (remove #(= id (:id %)) todos))))
