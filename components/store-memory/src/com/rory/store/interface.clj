@@ -1,9 +1,13 @@
-(ns com.rory.store.interface)
+(ns com.rory.store.interface
+  (:require [clojure.string :as str]))
 
-(defn create-store []
-  (atom []))
+(defn create-store
+  ([] (atom []))
+  ([db-spec] (atom [])))
 
 (defn add-todo [store title]
+  (when (str/blank? title)
+    (throw (Exception. "Title cannot be blank")))
   (let [todo {:id     (random-uuid)
               :title  title
               :status :pending}]
