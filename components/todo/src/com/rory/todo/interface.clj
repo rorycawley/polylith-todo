@@ -9,3 +9,6 @@
 
 (defn complete-todo [todo]
   (assoc todo :status :done))
+
+(defn list-todos [todos]
+  todos)

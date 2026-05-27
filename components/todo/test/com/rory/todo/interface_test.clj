@@ -25,3 +25,7 @@
                      todo/complete-todo
                      todo/complete-todo)]
       (is (= :done (:status result))))))
+
+(deftest list-todos-when-empty
+  (testing "Given no todos, when I list them, I get an empty list"
+    (is (= [] (todo/list-todos [])))))
