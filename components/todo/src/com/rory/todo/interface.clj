@@ -13,5 +13,8 @@
 (defn list-todos [todos]
   todos)
 
+
 (defn delete-todo [id todos]
+  (when (not-any? #(= id (:id %)) todos)
+    (throw (Exception. (str "Todo not found: " id))))
   (remove #(= id (:id %)) todos))

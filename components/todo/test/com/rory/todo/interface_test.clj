@@ -46,3 +46,8 @@
           result (todo/delete-todo 1 [todo1 todo2])]
       (is (= 1 (count result)))
       (is (not (some #(= "Buy milk" (:title %)) result))))))
+
+(deftest delete-a-non-existent-todo
+  (testing "Given a non-existent todo id, when I delete it, it returns an error"
+    (let [todo1 (assoc (todo/add-todo "Buy milk") :id 1)]
+      (is (thrown? Exception (todo/delete-todo 99 [todo1]))))))
